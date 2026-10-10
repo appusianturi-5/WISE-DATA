@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISE-DATA: Sistem Pendukung Keputusan Pusat Data AI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f0fdf4; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0284c7; }
+        #map { z-index: 10; }
+        .hero-background {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(5, 24, 48, 0.92) 0%,
+            rgba(8, 47, 73, 0.78) 50%,
+            rgba(8, 47, 73, 0.25) 100%
+        ),
+        url("background-datacenter.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* Animasi Cahaya Mengalir pada Teks */
+        @keyframes shine-text {
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+        .animate-shine-text {
+            animation: shine-text 4s linear infinite;
+        }
+    </style>
+
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col antialiased">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-blue-950 via-sky-900 to-blue-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-droplet text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight flex items-center gap-2">
+                        WISE-DATA 
+                    </h1>
+                    <p class="text-xs text-sky-200">Water and Infrastructure Sustainability Evaluation for Data Centers</p>
+                </div>
+            </div>
+            <nav class="hidden md:flex items-center space-x-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3.5 py-2 rounded-lg text-sm font-medium transition bg-sky-800/80 text-white shadow-sm border border-sky-700/50">
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard
+                </button>
+                <button onclick="switchTab('mapview')" id="nav-mapview" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-sky-800/50 text-sky-100">
+                    <i class="fa-solid fa-map-location-dot mr-1.5"></i> Peta Wilayah
+                </button>
+                <button onclick="switchTab('simulator')" id="nav-simulator" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-sky-800/50 text-sky-100">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Simulasi & Skenario
+                </button>
+                <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-sky-800/50 text-sky-100">
+                    <i class="fa-solid fa-ranking-star mr-1.5"></i> Pemeringkatan
+                </button>
+                <button onclick="switchTab('about')" id="nav-about" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-sky-800/50 text-sky-100">
+                    <i class="fa-solid fa-circle-info mr-1.5"></i> Tentang Gagasan
+                </button>
+                
+
+<button onclick="openLoginModal()"
+    class="ml-2 px-3 py-2 rounded-lg
+           bg-blue-600 hover:bg-blue-500
+           text-white text-sm font-semibold
+           whitespace-nowrap transition-all duration-300
+           hover:shadow-lg hover:shadow-blue-400/40
+           border border-blue-400/30">
+    <i class="fa-solid fa-right-to-bracket mr-1"></i>
+    Log In
+</button>
+
+
+            </nav>
+            <!-- Mobile Menu Toggle -->
+            <div class="md:hidden">
+                <button onclick="toggleMobileMenu()" class="p-2 rounded-lg text-sky-200 hover:bg-sky-900">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-blue-950 px-4 pt-2 pb-4 space-y-1 border-t border-sky-800/50">
+            <button onclick="switchTab('dashboard'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-sky-900 text-white">Dashboard</button>
+            <button onclick="switchTab('mapview'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-sky-900 text-white">Peta Wilayah</button>
+            <button onclick="switchTab('simulator'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-sky-900 text-white">Simulasi & Skenario</button>
+            <button onclick="switchTab('leaderboard'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-sky-900 text-white">Pemeringkatan</button>
+            <button onclick="switchTab('about'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-sky-900 text-white">Tentang Gagasan</button>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-5 py-3 overflow-y-auto">
+
+<!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="space-y-6">
+            <!-- Hero Banner Premium -->
+            <div class="hero-background relative text-white rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden border border-sky-500/20"</div>
+                <!-- Ornamen Cahaya -->
+                <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    <div class="absolute -top-[50%] -left-[10%] w-[70%] h-[150%] bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent rotate-45 transform origin-center animate-shine-text"></div>
+                    <div class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-[80px]"></div>
+                    <i class="fa-solid fa-server absolute -right-4 -bottom-10 text-[180px] text-white/5 rotate-12"></i>
+                </div>
+                
+                <div class="relative z-10 max-w-3xl">
+                    <div class="flex flex-wrap gap-2 mb-5">
+                        <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-white/10 text-cyan-300 backdrop-blur-md border border-white/10 shadow-lg uppercase tracking-wider">
+                            <i class="fa-solid fa-shield-halved"></i> Evaluasi Infrastruktur AI
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/20 text-amber-300 backdrop-blur-md border border-amber-500/20 shadow-lg uppercase tracking-wider">
+                            <i class="fa-solid fa-flask"></i> Data Simulasi
+                        </span>
+                    </div>
+
+                    <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
+                        Optimalkan Pusat Data dengan <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-300">Presisi Spasial</span>
+                    </h2>
+                    <p class="text-sky-100/90 text-sm sm:text-base leading-relaxed mb-8 max-w-2xl font-light">
+                        WISE-DATA mengintegrasikan risiko ketersediaan air, keandalan energi, dan potensi energi terbarukan guna mendukung perencanaan infrastruktur digital yang tangguh dan berkelanjutan di seluruh Indonesia.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="switchTab('simulator')" class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold text-sm shadow-lg shadow-blue-500/40 transition-all hover:-translate-y-1 flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> Mulai Simulasi
+                        </button>
+                        <button onclick="switchTab('mapview')" class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm backdrop-blur-md transition-all border border-white/20 hover:-translate-y-1 flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot"></i> Buka Peta Risiko
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Grid Premium -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-sky-900/5 border border-sky-100/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-sky-50 rounded-full transition-transform group-hover:scale-[3] duration-500 ease-out z-0"></div>
+                    <div class="relative z-10 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 flex items-center justify-center text-xl font-bold shadow-sm group-hover:bg-gradient-to-br group-hover:from-sky-400 group-hover:to-blue-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-map-pin"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Cakupan Wilayah</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 leading-none">514</h3>
+                            <p class="text-[9px] text-sky-600 font-semibold mt-1 uppercase">416 Kab &middot; 98 Kota</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-cyan-900/5 border border-cyan-100/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-cyan-50 rounded-full transition-transform group-hover:scale-[3] duration-500 ease-out z-0"></div>
+                    <div class="relative z-10 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-50 to-cyan-100 text-cyan-600 flex items-center justify-center text-xl font-bold shadow-sm group-hover:bg-gradient-to-br group-hover:from-cyan-400 group-hover:to-cyan-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-water"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Risiko Air</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 leading-none">50.1</h3>
+                            <p class="text-[9px] text-cyan-600 font-semibold mt-1 uppercase">Rata-rata Nasional</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-blue-900/5 border border-blue-100/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-50 rounded-full transition-transform group-hover:scale-[3] duration-500 ease-out z-0"></div>
+                    <div class="relative z-10 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold shadow-sm group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Energi Grid</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 leading-none">81.7%</h3>
+                            <p class="text-[9px] text-blue-600 font-semibold mt-1 uppercase">Tingkat Keandalan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-emerald-900/5 border border-emerald-100/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-50 rounded-full transition-transform group-hover:scale-[3] duration-500 ease-out z-0"></div>
+                    <div class="relative z-10 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold shadow-sm group-hover:bg-gradient-to-br group-hover:from-emerald-400 group-hover:to-emerald-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-leaf"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Rasio EBT</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 leading-none">24.5%</h3>
+                            <p class="text-[9px] text-emerald-600 font-semibold mt-1 uppercase">Energi Terbarukan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts & Highlights Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Chart -->
+                <div class="lg:col-span-2 bg-white p-5 sm:p-6 rounded-2xl shadow-sm hover:shadow-md border border-sky-100 transition-shadow">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="font-extrabold text-slate-800 text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-chart-area text-cyan-500"></i> Tren Risiko Spasial
+                            </h3>
+                            <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Perbandingan Risiko Air vs Rasio Energi Terbarukan.</p>
+                        </div>
+                        <span class="px-2.5 py-1 bg-slate-100 text-slate-500 text-[9px] font-bold rounded-lg uppercase tracking-wider border border-slate-200">15 Sampel</span>
+                    </div>
+                    <div class="h-64 relative w-full">
+                        <canvas id="mainDashboardChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Top Recommendations Widget -->
+                <div class="bg-gradient-to-b from-white to-slate-50 p-5 sm:p-6 rounded-2xl shadow-sm hover:shadow-md border border-sky-100 transition-shadow flex flex-col relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-amber-100/40 rounded-full blur-[40px] pointer-events-none"></div>
+                    <h3 class="font-extrabold text-slate-800 text-lg flex items-center gap-2 mb-1 relative z-10">
+                        <i class="fa-solid fa-award text-amber-500 text-xl"></i> Top 3 Wilayah
+                    </h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500 mb-5 relative z-10">Rekomendasi lokasi paling ideal.</p>
+                    
+                    <div id="top-recommendations-list" class="space-y-3 flex-1 relative z-10">
+                        <!-- Populated by JS -->
+                    </div>
+                    
+                    <button onclick="switchTab('leaderboard')" class="mt-5 w-full py-3 rounded-xl bg-white border border-slate-200 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 text-slate-600 font-bold text-[11px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 relative z-10">
+                        Peringkat Lengkap <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+<!-- TAB 2: MAP VIEW -->
+        <section id="tab-mapview" class="hidden space-y-4">
+            
+            <!-- Header WebGIS & Legenda -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-50 to-blue-50 border border-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="fa-solid fa-map-location-dot text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800">WebGIS Sebaran Risiko Wilayah</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Pilih titik marker untuk melihat evaluasi kelayakan spasial.</p>
+                    </div>
+                </div>
+                <!-- Indikator Modern -->
+                <div class="flex items-center gap-2 flex-wrap bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <span class="text-[10px] px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold shadow-sm flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></span> Rendah (&lt;45)</span>
+                    <span class="text-[10px] px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold shadow-sm flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500 shadow-sm"></span> Sedang (45-60)</span>
+                    <span class="text-[10px] px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold shadow-sm flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-500 shadow-sm"></span> Tinggi (&gt;60)</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- Kontainer Peta -->
+                <div class="lg:col-span-8 bg-white p-2 sm:p-3 rounded-2xl shadow-sm border border-slate-200">
+                    <div id="map-wrapper" class="relative w-full overflow-hidden rounded-xl border border-slate-100" style="height: 550px;">
+                        <div id="map" class="w-full h-full" style="z-index: 1;"></div>
+
+                        <!-- Panel Detail Mengambang (Diperkecil & Kompak) -->
+                        <div id="floating-region-detail" class="absolute top-4 right-4 w-60 max-w-[calc(100%-32px)] max-h-[calc(100%-32px)] overflow-y-auto z-[1000] bg-white/85 backdrop-blur-md border border-white shadow-2xl shadow-slate-900/15 rounded-2xl transition-all">
+                            
+                            <!-- Header Drag -->
+                            <div id="floating-detail-header" class="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-slate-100/60 to-white/60 border-b border-slate-200/50 cursor-grab active:cursor-grabbing rounded-t-2xl">
+                                <span class="text-[9px] font-extrabold tracking-wider text-slate-500 uppercase"><i class="fa-solid fa-circle-info mr-1"></i> Detail Wilayah</span>
+                                <i class="fa-solid fa-grip-lines text-slate-400 text-xs"></i>
+                            </div>
+
+                            <!-- Isi Panel -->
+                            <div class="p-3">
+                                <div class="mb-3">
+                                    <h4 id="map-region-name" class="text-sm font-extrabold text-slate-800 leading-tight">Pilih titik peta</h4>
+                                    <p id="map-region-province" class="text-[10px] font-medium text-slate-500 mt-0.5">Klik marker untuk detail</p>
+                                    <span id="map-region-type" class="inline-block mt-1.5 px-1.5 py-0.5 rounded bg-blue-50/80 border border-blue-100 text-[8px] font-bold text-blue-600 uppercase tracking-wider">Wilayah</span>
+                                </div>
+
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between items-center bg-white/60 p-2 rounded-lg border border-slate-100 shadow-sm">
+                                        <span class="text-[10px] font-semibold text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-droplet text-cyan-500 w-3"></i> Risiko Air</span>
+                                        <strong id="map-val-water" class="text-[10px] font-bold text-slate-800">-</strong>
+                                    </div>
+                                    <div class="flex justify-between items-center bg-white/60 p-2 rounded-lg border border-slate-100 shadow-sm">
+                                        <span class="text-[10px] font-semibold text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-bolt text-blue-500 w-3"></i> Energi</span>
+                                        <strong id="map-val-energy" class="text-[10px] font-bold text-slate-800">-</strong>
+                                    </div>
+                                    <div class="flex justify-between items-center bg-white/60 p-2 rounded-lg border border-slate-100 shadow-sm">
+                                        <span class="text-[10px] font-semibold text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-500 w-3"></i> Rasio EBT</span>
+                                        <strong id="map-val-renew" class="text-[10px] font-bold text-slate-800">-</strong>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 pt-2.5 border-t border-slate-200/60">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Skor Kelayakan</span>
+                                        <strong id="map-val-score" class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 leading-none">-</strong>
+                                    </div>
+                                </div>
+
+                                <button onclick="jumpToSimulatorFromMap()" class="mt-3.5 w-full py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white text-[10px] font-bold shadow-md shadow-blue-500/30 transition-all flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-flask"></i> Mulai Simulasi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daftar 15 Wilayah (Sidebar Kanan) -->
+                <div class="lg:col-span-4 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[574px]">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-list-ol text-amber-500"></i> Peringkat Spasial Teratas
+                        </h3>
+                        <p class="text-[10px] text-slate-500 mt-1">
+                            15 lokasi unggulan berdasarkan skor terintegrasi.
+                        </p>
+                    </div>
+
+                    <!-- Daftar List Otomatis -->
+                    <div id="region-list" class="space-y-2 flex-1 overflow-y-auto pr-1.5 pb-2">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="pt-4 mt-2 border-t border-slate-100 shrink-0">
+                        <button onclick="jumpToSimulatorFromMap()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition-all shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-calculator"></i> Lanjutkan ke Simulasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+<!-- TAB 3: SIMULATOR -->
+        <section id="tab-simulator" class="hidden space-y-6 bg-gradient-to-br from-sky-50 via-white to-blue-50 p-4 sm:p-6 rounded-2xl">
+            
+            <!-- HEADER SIMULATOR -->
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-sky-100 mb-3">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                    <div class="lg:col-span-5 min-w-0">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="w-10 h-10 shrink-0 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                                <i class="fa-solid fa-sliders text-lg"></i>
+                            </span>
+                            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 leading-tight">
+                                Simulasi Kebutuhan Air &amp; Energi
+                            </h3>
+                        </div>
+                        <p class="text-sm text-slate-500 leading-relaxed">
+                            Uji dampak kapasitas, teknologi pendingin, dan skenario operasional terhadap kelayakan lokasi pusat data AI.
+                        </p>
+                    </div>
+                    <div class="lg:col-span-7 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                        <p class="text-xs font-bold text-slate-600 mb-2">Pilih Skenario Cepat:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <button type="button" onclick="setScenario('baseline')" class="min-w-0 p-2.5 rounded-xl border border-blue-200 bg-blue-50 text-left hover:bg-blue-100 transition">
+                                <div class="flex items-center gap-2 text-blue-700">
+                                    <i class="fa-solid fa-bullseye shrink-0"></i><span class="text-xs font-bold">Baseline</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">Kondisi standar</p>
+                            </button>
+                            <button type="button" onclick="setScenario('water')" class="min-w-0 p-2.5 rounded-xl border border-cyan-200 bg-cyan-50 text-left hover:bg-cyan-100 transition">
+                                <div class="flex items-center gap-2 text-cyan-700">
+                                    <i class="fa-solid fa-leaf shrink-0"></i><span class="text-xs font-bold">Efisiensi Air</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">Penghematan air</p>
+                            </button>
+                            <button type="button" onclick="setScenario('energy')" class="min-w-0 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50 text-left hover:bg-emerald-100 transition">
+                                <div class="flex items-center gap-2 text-emerald-700">
+                                    <i class="fa-solid fa-seedling shrink-0"></i><span class="text-xs font-bold">Energi Rendah Karbon</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">Energi terbarukan</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KONTEN SIMULATOR (Kiri & Kanan) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                
+                <!-- Panel Parameter (Kiri) -->
+                <div class="lg:col-span-4 min-w-0">
+                    <div class="bg-sky-50/70 p-3 sm:p-4 rounded-2xl border border-sky-100">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <i class="fa-solid fa-gear text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-slate-800">Parameter Simulasi</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed mt-1">Atur parameter sesuai kebutuhan.</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-2">
+                                <i class="fa-solid fa-location-dot"></i> Pilih Wilayah
+                            </label>
+                            <select id="sim-region-select" onchange="runSimulation()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sim-mw" class="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-2">
+                                <i class="fa-solid fa-server"></i> Kapasitas IT (MW)
+                            </label>
+                            <div class="flex items-center gap-3">
+                                <input type="range" id="sim-mw" min="10" max="200" step="10" value="50" oninput="document.getElementById('sim-mw-val').innerText = this.value + ' MW'; runSimulation();" class="flex-1 min-w-0 accent-blue-600">
+                                <span id="sim-mw-val" class="min-w-[65px] shrink-0 text-center px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-800">50 MW</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-2">
+                                <i class="fa-solid fa-snowflake text-blue-500"></i> Teknologi Pendingin
+                            </label>
+                            <select id="sim-cooling" onchange="runSimulation()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="air">Air Cooling Konvensional</option>
+                                <option value="evaporative" selected>Evaporative Cooling (Standar)</option>
+                                <option value="closed">Closed-Loop Chilled Water</option>
+                                <option value="immersion">Immersion Cooling</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-2">
+                                <i class="fa-solid fa-bolt text-blue-500"></i> PUE (Efektivitas Daya)
+                            </label>
+                            <input type="number" id="sim-pue" min="1.1" max="2.0" step="0.05" value="1.45" onchange="runSimulation()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+
+                        <button type="button" onclick="runSimulation()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition">
+                            <i class="fa-solid fa-play"></i> Jalankan Simulasi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panel Hasil (Kanan) -->
+                <div class="lg:col-span-8 space-y-3 min-w-0">
+                    
+                    <!-- 3 Kartu Hasil -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="relative overflow-hidden bg-white p-3 rounded-2xl border border-cyan-100 shadow-sm hover:shadow-md hover:border-cyan-300 transition-all duration-300 h-[110px] flex flex-col justify-between group">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-cyan-500 group-hover:bg-cyan-400 transition-colors"></div>
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0">
+                                    <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-slate-500 group-hover:text-cyan-700 transition-colors">Konsumsi Air</p>
+                                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">Liter / Tahun (Juta)</p>
+                                </div>
+                                <div class="w-8 h-8 shrink-0 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:bg-cyan-500 group-hover:text-white transition-all duration-300">
+                                    <i class="fa-solid fa-droplet text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end justify-between gap-2">
+                                <h4 id="res-water-consumption" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800 leading-none">-</h4>
+                                <div class="flex items-end gap-1 h-5 shrink-0 opacity-80" aria-hidden="true">
+                                    <span class="w-1.5 h-2.5 rounded-t bg-cyan-200"></span><span class="w-1.5 h-4 rounded-t bg-cyan-300"></span><span class="w-1.5 h-3.5 rounded-t bg-cyan-400"></span><span class="w-1.5 h-5 rounded-t bg-cyan-500"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative overflow-hidden bg-white p-3 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-300 h-[110px] flex flex-col justify-between group">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-blue-600 group-hover:bg-blue-500 transition-colors"></div>
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0">
+                                    <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-slate-500 group-hover:text-blue-700 transition-colors">Kebutuhan Energi</p>
+                                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">GWh / Tahun</p>
+                                </div>
+                                <div class="w-8 h-8 shrink-0 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                                    <i class="fa-solid fa-bolt text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end justify-between gap-2">
+                                <h4 id="res-energy-total" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800 leading-none">-</h4>
+                            </div>
+                        </div>
+
+                        <div id="score-card" class="relative overflow-hidden p-3 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 h-[110px] bg-orange-50 border-orange-200 flex flex-col justify-between group">
+                            <div id="score-top-line" class="absolute top-0 left-0 w-full h-1 bg-orange-500"></div>
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0">
+                                    <p id="score-label" class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-orange-800">Skor Kelayakan</p>
+                                    <p id="score-description" class="text-[9px] sm:text-[10px] text-orange-800 mt-0.5 opacity-80 line-clamp-1">Skala 0–100 · Perlu Evaluasi</p>
+                                </div>
+                                <div id="score-icon" class="w-8 h-8 shrink-0 rounded-xl bg-white text-orange-600 flex items-center justify-center shadow-sm">
+                                    <i class="fa-solid fa-circle-exclamation text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end justify-between gap-2">
+                                <h4 id="res-feasibility-score" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-orange-950 leading-none">-</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Perbandingan Skenario -->
+                    <div class="bg-white border border-sky-100 p-3.5 rounded-2xl shadow-sm">
+                        <div class="mb-3 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-chart-column text-cyan-600 mr-1.5"></i> Perbandingan Skenario</h4>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
+                                <h5 class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2 text-center">Konsumsi Air <span class="normal-case font-normal">(Juta Liter/Tahun)</span></h5>
+                                <div class="h-28 relative w-full"><canvas id="scenarioWaterChart"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
+                                <h5 class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2 text-center">Kebutuhan Energi <span class="normal-case font-normal">(GWh/Tahun)</span></h5>
+                                <div class="h-28 relative w-full"><canvas id="scenarioEnergyChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Insight & Rekomendasi -->
+                    <div class="bg-gradient-to-br from-white to-slate-50 border border-sky-100 p-3 sm:p-4 rounded-2xl shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-100/50 rounded-full blur-2xl pointer-events-none"></div>
+                        <div class="flex items-center gap-3 mb-3 relative z-10">
+                            <div class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-amber-100 to-yellow-50 text-amber-500 flex items-center justify-center border border-amber-200/50 shadow-sm">
+                                <i class="fa-solid fa-lightbulb text-base"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">Insight &amp; Rekomendasi</h4>
+                            </div>
+                        </div>
+                        <div id="res-analysis-text" class="text-xs sm:text-sm text-slate-600 leading-relaxed relative z-10">
+                            Memuat analisis simulasi...
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+</section>
+
+ <!-- TAB 4: LEADERBOARD -->
+        <section id="tab-leaderboard" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-sky-100">
+                <!-- Header & Search -->
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-ranking-star text-amber-500 text-2xl"></i> 
+                            Pemeringkatan Lokasi Optimal Pusat Data AI
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Diurutkan berdasarkan pembobotan terintegrasi: Risiko air terendah + Keandalan energi tinggi + Rasio EBT.
+                        </p>
+                    </div>
+                    
+                    <!-- Kolom Pencarian -->
+                    <div class="relative w-full md:w-72">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+                        </div>
+                        <input type="text" id="leaderboard-search" oninput="renderLeaderboard()" 
+                            placeholder="Cari kabupaten atau kota..." 
+                            class="block w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all shadow-sm outline-none text-slate-700">
+                    </div>
+                </div>
+
+                <!-- Tabel Pemeringkatan -->
+                <div class="overflow-x-auto rounded-xl border border-slate-100">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <th class="py-4 px-5">Peringkat</th>
+                                <th class="py-4 px-5">Wilayah</th>
+                                <th class="py-4 px-5">Provinsi</th>
+                                <th class="py-4 px-5">Risiko Air</th>
+                                <th class="py-4 px-5">Keandalan Energi</th>
+                                <th class="py-4 px-5">Rasio EBT</th>
+                                <th class="py-4 px-5 text-center">Skor WISE-DATA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-table-body" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    <!-- TAB 5: ABOUT -->
+        <section id="tab-about" class="hidden space-y-6">
+            <div class="bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
+                
+                <!-- Header Section -->
+                <div class="border-b border-slate-100 pb-6 mb-6">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 mb-4 tracking-wide uppercase">
+                        <i class="fa-solid fa-microscope"></i> LKTIN 2026 Scientific Outline
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
+                        Tentang <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">WISE-DATA</span>
+                    </h2>
+                    <p class="text-sm text-slate-500 leading-relaxed max-w-3xl">
+                        Sistem Pendukung Keputusan Pemilihan Lokasi Pusat Data Kecerdasan Buatan Berdasarkan Risiko Air dan Energi di Indonesia.
+                    </p>
+                </div>
+
+                <!-- 4 Grid Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    <!-- Card 1: Latar Belakang -->
+                    <div class="group p-5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-white shadow-sm border border-slate-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                                <i class="fa-solid fa-bullseye text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm mb-1.5 group-hover:text-blue-700 transition-colors">Latar Belakang & Urgensi</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Peningkatan pesat infrastruktur AI memerlukan daya besar dan air pendingin masif. Pembangunan pusat data di wilayah rentan krisis air dapat memicu tekanan ekologis dan konflik sumber daya dengan masyarakat sekitar.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Solusi Inovatif -->
+                    <div class="group p-5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-100 hover:border-cyan-200 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-white shadow-sm border border-slate-100 text-cyan-600 flex items-center justify-center shrink-0 group-hover:bg-cyan-500 group-hover:text-white transition-colors duration-300">
+                                <i class="fa-solid fa-lightbulb text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm mb-1.5 group-hover:text-cyan-600 transition-colors">Solusi Inovatif WISE-DATA</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Platform web berbasis pemodelan data spasial dan skenario parameter teknis yang mempermudah perencana infrastruktur dalam mengevaluasi efisiensi pendingin, cadangan energi, serta risiko wilayah secara transparan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Pihak yang Terlibat -->
+                    <div class="group p-5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-white shadow-sm border border-slate-100 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                                <i class="fa-solid fa-handshake text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm mb-1.5 group-hover:text-indigo-700 transition-colors">Pihak yang Terlibat</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Melibatkan tim pengembang akademis, instansi pengelola data air & lingkungan (Bappenas/Kementerian LHK/ESDM), pengelola pusat data, serta pembuat kebijakan infrastruktur nasional.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Langkah Implementasi -->
+                    <div class="group p-5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-white shadow-sm border border-slate-100 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+                                <i class="fa-solid fa-route text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm mb-1.5 group-hover:text-emerald-700 transition-colors">Langkah Implementasi Strategis</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Dimulai dari kajian literatur, pengumpulan dataset wilayah Indonesia, pengembangan algoritma skenario pemeringkatan, hingga pengujian prototipe interaktif web app untuk evaluasi berkelanjutan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+<!-- Footer Premium dengan Efek Cahaya (Ukuran Diperkecil) -->
+    <footer class="relative bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 border-t border-sky-900/50 py-2.5 overflow-hidden mt-auto">
+        <!-- Aksen Garis Cahaya di Atas Footer -->
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50"></div>
+        
+        <div class="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3">
+            <!-- Logo & Nama Tim -->
+            <div class="flex items-center space-x-1.5">
+                <i class="fa-solid fa-droplet text-cyan-500 text-[11px] shadow-cyan-500/50 drop-shadow-md"></i>
+                <p class="text-[10px] font-bold tracking-widest text-slate-300 uppercase">
+                    WISE-DATA <span class="text-slate-500 font-medium">Research Team</span>
+                </p>
+            </div>
+            
+            <!-- Garis Pemisah (Hanya tampil di layar besar) -->
+            <span class="hidden sm:inline text-slate-700 text-[10px] pb-0.5">|</span>
+            
+            <!-- Teks Copyright dengan Animasi Kilau -->
+            <p class="text-[9px] sm:text-[10px] text-slate-500 tracking-wider uppercase flex items-center gap-1">
+                &copy; 2026. 
+                <span class="inline-block bg-gradient-to-r from-slate-500 via-cyan-100 to-slate-500 bg-[length:200%_auto] bg-clip-text text-transparent animate-shine-text font-bold">
+                    All rights reserved.
+                </span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+// Dataset Wilayah Indonesia (15 Sampel)
+const regions = [
+    {id:'R01', name:'Kabupaten Deli Serdang', province:'Sumatera Utara', type:'Kabupaten', lat:3.42, lng:98.70, waterRisk:38, energyRel:78, renewables:25},
+    {id:'R02', name:'Kota Medan', province:'Sumatera Utara', type:'Kota', lat:3.59, lng:98.67, waterRisk:58, energyRel:85, renewables:18},
+    {id:'R03', name:'Kabupaten Langkat', province:'Sumatera Utara', type:'Kabupaten', lat:3.72, lng:98.22, waterRisk:32, energyRel:72, renewables:30},
+    {id:'R04', name:'Kota Pekanbaru', province:'Riau', type:'Kota', lat:0.51, lng:101.45, waterRisk:48, energyRel:82, renewables:15},
+    {id:'R05', name:'Kabupaten Siak', province:'Riau', type:'Kabupaten', lat:0.80, lng:102.00, waterRisk:42, energyRel:75, renewables:20},
+    {id:'R06', name:'Kota Palembang', province:'Sumatera Selatan', type:'Kota', lat:-2.99, lng:104.76, waterRisk:50, energyRel:85, renewables:22},
+    {id:'R07', name:'Kota Batam', province:'Kepulauan Riau', type:'Kota', lat:1.13, lng:104.05, waterRisk:68, energyRel:88, renewables:12},
+    {id:'R08', name:'Kabupaten Bekasi', province:'Jawa Barat', type:'Kabupaten', lat:-6.24, lng:107.15, waterRisk:72, energyRel:94, renewables:25},
+    {id:'R09', name:'Kota Bandung', province:'Jawa Barat', type:'Kota', lat:-6.91, lng:107.61, waterRisk:55, energyRel:90, renewables:35},
+    {id:'R10', name:'Kabupaten Batang', province:'Jawa Tengah', type:'Kabupaten', lat:-6.91, lng:109.73, waterRisk:48, energyRel:82, renewables:30},
+    {id:'R11', name:'Kabupaten Gresik', province:'Jawa Timur', type:'Kabupaten', lat:-7.16, lng:112.65, waterRisk:62, energyRel:92, renewables:25},
+    {id:'R12', name:'Kota Balikpapan', province:'Kalimantan Timur', type:'Kota', lat:-1.27, lng:116.83, waterRisk:45, energyRel:84, renewables:20},
+    {id:'R13', name:'Kabupaten Kutai Kartanegara', province:'Kalimantan Timur', type:'Kabupaten', lat:0.13, lng:116.61, waterRisk:30, energyRel:78, renewables:25},
+    {id:'R14', name:'Kota Makassar', province:'Sulawesi Selatan', type:'Kota', lat:-5.14, lng:119.43, waterRisk:60, energyRel:86, renewables:40},
+    {id:'R15', name:'Kota Jayapura', province:'Papua', type:'Kota', lat:-2.53, lng:140.72, waterRisk:28, energyRel:65, renewables:25}
+];
+
+let map = null;
+let markers = {};
+let selectedRegionId = 'R01';
+let mainChartInstance = null;
+let scenarioWaterChart = null;
+let scenarioEnergyChart = null;
+
+// Tab Switching Handler
+function switchTab(tabId) {
+    const tabs = ['dashboard', 'mapview', 'simulator', 'leaderboard', 'about'];
+    tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (t === tabId) {
+            el.classList.remove('hidden');
+            if(nav) nav.className = "px-3.5 py-2 rounded-lg text-sm font-medium transition bg-sky-800 text-white shadow-sm border border-sky-700/50";
+        } else {
+            el.classList.add('hidden');
+            if(nav) nav.className = "px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-sky-800/50 text-sky-100";
+        }
+    });
+
+    if (tabId === 'mapview' && !map) {
+        initMap();
+    } else if (tabId === 'mapview' && map) {
+        setTimeout(() => map.invalidateSize(), 200);
+    }
+}
+
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    menu.classList.toggle('hidden');
+}
+
+// Fitur Login (Kosong untuk mencegah error)
+function openLoginModal() {
+    alert("Fitur Login sedang dalam pengembangan!");
+}
+
+// Inisialisasi Tab 1 (Dashboard)
+function initDashboard() {
+    // 1. Render Top 3 Rekomendasi
+    const topList = document.getElementById('top-recommendations-list');
+    if (topList) {
+        // Hitung skor, urutkan dari terbesar ke terkecil, ambil 3 teratas
+        const ranked = [...regions].map(r => ({...r, score: calculateWiseScore(r)})).sort((a,b) => b.score - a.score).slice(0, 3);
+        
+        topList.innerHTML = ranked.map((reg, idx) => {
+            // Berikan warna piala berbeda untuk juara 1, 2, dan 3
+            let badgeStyle = idx === 0 ? 'bg-gradient-to-br from-amber-200 to-yellow-400 text-yellow-900 border-yellow-300' 
+                           : idx === 1 ? 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-700 border-slate-300' 
+                           : 'bg-gradient-to-br from-orange-200 to-orange-300 text-orange-900 border-orange-300';
+            return `
+                <div class="group flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 hover:border-cyan-300 hover:shadow-md hover:shadow-cyan-500/10 transition-all cursor-pointer" onclick="switchTab('mapview'); setTimeout(() => selectRegionOnMap('${reg.id}'), 150)">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-sm border shadow-sm ${badgeStyle}">
+                            ${idx + 1}
+                        </div>
+                        <div>
+                            <h4 class="text-[13px] font-bold text-slate-800 group-hover:text-cyan-600 transition-colors">${reg.name}</h4>
+                            <p class="text-[10px] text-slate-500 mt-0.5">${reg.province}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[15px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 leading-none">${reg.score}</div>
+                        <div class="text-[9px] text-slate-400 uppercase font-bold mt-1">Skor</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 2. Render Grafik Utama (Tren Risiko Spasial)
+    const ctx = document.getElementById('mainDashboardChart');
+    if (ctx) {
+        if (mainChartInstance) mainChartInstance.destroy();
+        const labels = regions.map(r => r.name.replace('Kabupaten ', 'Kab. ').replace('Kota ', ''));
+        const waterRisks = regions.map(r => r.waterRisk);
+        const renewables = regions.map(r => r.renewables);
+
+        mainChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Risiko Air (Lebih rendah lebih baik)',
+                        data: waterRisks,
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#0284c7',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Rasio EBT (%) (Lebih tinggi lebih baik)',
+                        data: renewables,
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        pointBackgroundColor: '#059669',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11, family: "'Inter', sans-serif" } } },
+                    tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { size: 13 }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 8 }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45, font: { size: 9 } } }
+                }
+            }
+        });
+    }
+}
+// Fitur Skenario Cepat
+function setScenario(type) {
+    const pueEl = document.getElementById('sim-pue');
+    const coolingEl = document.getElementById('sim-cooling');
+    if (!pueEl || !coolingEl) return;
+
+    if (type === 'baseline') {
+        pueEl.value = 1.45;
+        coolingEl.value = 'evaporative';
+    } else if (type === 'water') {
+        pueEl.value = 1.35;
+        coolingEl.value = 'closed';
+    } else if (type === 'energy') {
+        pueEl.value = 1.20;
+        coolingEl.value = 'immersion';
+    }
+    runSimulation();
+}
+
+function calculateWiseScore(reg) {
+    const waterScore = 100 - reg.waterRisk;
+    const energyScore = reg.energyRel;
+    const renewScore = reg.renewables;
+    return Math.round((waterScore * 0.4) + (energyScore * 0.3) + (renewScore * 0.3));
+}
+
+// Render Daftar Peringkat Samping Peta
+function renderRegionList() {
+    const list = document.getElementById('region-list');
+    if (!list) return;
+
+    const rankedRegions = regions
+        .map(reg => ({...reg, score: calculateWiseScore(reg)}))
+        .sort((a, b) => b.score - a.score);
+
+    list.innerHTML = rankedRegions.map((reg, index) => {
+        let riskLabel = 'Rendah';
+        let riskClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+        if (reg.waterRisk > 60) {
+            riskLabel = 'Tinggi';
+            riskClass = 'bg-rose-50 text-rose-700 border-rose-200';
+        } else if (reg.waterRisk >= 45) {
+            riskLabel = 'Sedang';
+            riskClass = 'bg-amber-50 text-amber-700 border-amber-200';
+        }
+
+        return `
+            <button type="button" data-region-id="${reg.id}" onclick="selectRegionOnMap('${reg.id}')"
+                class="region-list-item group w-full text-left p-3 rounded-xl border border-slate-100 bg-white hover:border-blue-300 hover:shadow-md hover:shadow-blue-500/10 transition-all duration-200">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-7 h-7 shrink-0 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-[10px] font-extrabold text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:border-blue-200 transition-colors">
+                            ${index + 1}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-700 truncate group-hover:text-blue-700 transition-colors">
+                                ${reg.name}
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-0.5 truncate">
+                                Skor WISE: <span class="font-bold text-slate-600">${reg.score}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="shrink-0 text-[9px] font-bold px-2 py-1 rounded-md border ${riskClass}">
+                        ${riskLabel}
+                    </span>
+                </div>
+            </button>
+        `;
+    }).join('');
+}
+
+// Logika Pemilihan dan Penandaan Aktif
+function selectRegionOnMap(id, moveMap = true) {
+    selectedRegionId = id;
+    const reg = regions.find(r => r.id === id);
+    if (!reg) return;
+
+    // Update teks panel mengambang
+    document.getElementById('map-region-name').innerText = reg.name;
+    document.getElementById('map-region-province').innerText = reg.province;
+    document.getElementById('map-region-type').innerText = reg.type;
+    document.getElementById('map-val-water').innerText = reg.waterRisk + ' / 100';
+    document.getElementById('map-val-energy').innerText = reg.energyRel + '%';
+    document.getElementById('map-val-renew').innerText = reg.renewables + '%';
+    document.getElementById('map-val-score').innerText = calculateWiseScore(reg);
+
+    // Update gaya CSS item yang aktif di daftar kanan
+    document.querySelectorAll('.region-list-item').forEach(item => {
+        const selected = item.dataset.regionId === id;
+        item.classList.toggle('border-blue-400', selected);
+        item.classList.toggle('bg-blue-50/40', selected);
+        item.classList.toggle('shadow-sm', selected);
+        // Hapus kelas gaya lama jika ada
+        item.classList.remove('border-sky-500', 'bg-sky-50');
+    });
+
+    // Pindahkan kamera peta (animasi)
+    if (map && moveMap) map.setView([reg.lat, reg.lng], 8, { animate: true });
+}
+
+function initMap() {
+    if (map) { map.invalidateSize(); return; }
+    map = L.map('map').setView([-2.5489, 118.0149], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' }).addTo(map);
+
+    renderRegionList();
+    regions.forEach(reg => {
+        let color = reg.waterRisk > 60 ? '#f43f5e' : (reg.waterRisk >= 45 ? '#f59e0b' : '#22c55e');
+        const customIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>`,
+            iconSize: [16, 16], iconAnchor: [8, 8]
+        });
+        const marker = L.marker([reg.lat, reg.lng], { icon: customIcon }).addTo(map);
+        marker.on('click', function () { selectRegionOnMap(reg.id, false); });
+        markers[reg.id] = marker;
+    });
+
+    initDraggableRegionPanel();
+    selectRegionOnMap('R01', false);
+}
+
+function selectRegionOnMap(id, moveMap = true) {
+    selectedRegionId = id;
+    const reg = regions.find(r => r.id === id);
+    if (!reg) return;
+
+    document.getElementById('map-region-name').innerText = reg.name;
+    document.getElementById('map-region-province').innerText = reg.province;
+    document.getElementById('map-region-type').innerText = reg.type;
+    document.getElementById('map-val-water').innerText = reg.waterRisk + ' / 100';
+    document.getElementById('map-val-energy').innerText = reg.energyRel + '%';
+    document.getElementById('map-val-renew').innerText = reg.renewables + '%';
+    document.getElementById('map-val-score').innerText = calculateWiseScore(reg) + ' / 100';
+
+    document.querySelectorAll('.region-list-item').forEach(item => {
+        const selected = item.dataset.regionId === id;
+        item.classList.toggle('border-sky-500', selected);
+        item.classList.toggle('bg-sky-50', selected);
+    });
+
+    if (map && moveMap) map.setView([reg.lat, reg.lng], 8, { animate: true });
+}
+
+function jumpToSimulatorFromMap() {
+    const selectEl = document.getElementById('sim-region-select');
+    if (selectEl) selectEl.value = selectedRegionId;
+    switchTab('simulator');
+    runSimulation();
+}
+
+function initDraggableRegionPanel() {
+    const panel = document.getElementById('floating-region-detail');
+    const handle = document.getElementById('floating-detail-header');
+    const wrapper = document.getElementById('map-wrapper');
+    if (!panel || !handle || !wrapper) return;
+    if (handle.dataset.dragReady === 'true') return;
+    handle.dataset.dragReady = 'true';
+
+    let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    handle.addEventListener('pointerdown', function(event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        const panelRect = panel.getBoundingClientRect(), wrapperRect = wrapper.getBoundingClientRect();
+        panel.style.left = (panelRect.left - wrapperRect.left) + 'px';
+        panel.style.top = (panelRect.top - wrapperRect.top) + 'px';
+        panel.style.right = 'auto';
+        dragging = true; startX = event.clientX; startY = event.clientY;
+        startLeft = parseFloat(panel.style.left); startTop = parseFloat(panel.style.top);
+        handle.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+
+    handle.addEventListener('pointermove', function(event) {
+        if (!dragging) return;
+        const maxLeft = Math.max(0, wrapper.clientWidth - panel.offsetWidth);
+        const maxTop = Math.max(0, wrapper.clientHeight - panel.offsetHeight);
+        panel.style.left = Math.max(0, Math.min(startLeft + event.clientX - startX, maxLeft)) + 'px';
+        panel.style.top = Math.max(0, Math.min(startTop + event.clientY - startY, maxTop)) + 'px';
+    });
+
+    function stopDragging() { dragging = false; }
+    handle.addEventListener('pointerup', stopDragging);
+    handle.addEventListener('pointercancel', stopDragging);
+    handle.addEventListener('lostpointercapture', stopDragging);
+}
+
+function initSimulator() {
+    const selectEl = document.getElementById('sim-region-select');
+    if(selectEl) {
+        selectEl.innerHTML = '';
+        regions.forEach(reg => { selectEl.innerHTML += `<option value="${reg.id}">${reg.name} (${reg.province})</option>`; });
+        runSimulation();
+    }
+}
+
+function updateScenarioCharts(mw) {
+    const scenarios = [
+        { name: 'Baseline', pue: 1.45, waterFactor: 1.8 },
+        { name: 'Efisiensi Air', pue: 1.35, waterFactor: 1.1 },
+        { name: 'Rendah Karbon', pue: 1.20, waterFactor: 0.7 }
+    ];
+
+    const energyValues = scenarios.map(s => Number(((mw * 8760 * s.pue) / 1000).toFixed(2)));
+    const waterValues = scenarios.map(s => Number(((mw * 1000 * 8760 * s.waterFactor) / 1000000).toFixed(2)));
+
+    const waterCanvas = document.getElementById('scenarioWaterChart');
+    const energyCanvas = document.getElementById('scenarioEnergyChart');
+    if (!waterCanvas || !energyCanvas) return;
+
+    if (scenarioWaterChart) scenarioWaterChart.destroy();
+    if (scenarioEnergyChart) scenarioEnergyChart.destroy();
+
+    const commonOptions = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#e5e7eb' } }, x: { grid: { display: false } } }
+    };
+
+    scenarioWaterChart = new Chart(waterCanvas, {
+        type: 'bar',
+        data: { labels: scenarios.map(s => s.name), datasets: [{ data: waterValues, backgroundColor: ['#2878F0', '#32C1CF', '#35BD68'], borderRadius: 6 }] },
+        options: commonOptions
+    });
+
+    scenarioEnergyChart = new Chart(energyCanvas, {
+        type: 'bar',
+        data: { labels: scenarios.map(s => s.name), datasets: [{ data: energyValues, backgroundColor: ['#2878F0', '#32C1CF', '#35BD68'], borderRadius: 6 }] },
+        options: commonOptions
+    });
+}
+
+function runSimulation() {
+    const regId = document.getElementById('sim-region-select').value;
+    const reg = regions.find(r => r.id === regId) || regions[0];
+    const mw = parseFloat(document.getElementById('sim-mw').value);
+    const coolingType = document.getElementById('sim-cooling').value;
+    const pue = parseFloat(document.getElementById('sim-pue').value);
+
+    const totalEnergyGWh = Math.round((mw * 8760 * pue) / 1000);
+    updateScenarioCharts(mw);
+
+    let waterFactor = coolingType === 'air' ? 0.4 : (coolingType === 'closed' ? 1.1 : (coolingType === 'immersion' ? 0.7 : 1.8));
+    const totalWaterLitersMillion = (((mw * 1000 * 8760) * waterFactor) / 1000000).toFixed(2);
+
+    let finalScore = calculateWiseScore(reg);
+    if (coolingType === 'closed') finalScore = Math.min(100, finalScore + 5);
+    else if (coolingType === 'immersion') finalScore = Math.min(100, finalScore + 8);
+    else if (coolingType === 'air') finalScore = Math.max(0, finalScore - 3);
+
+    document.getElementById('res-energy-total').innerText = totalEnergyGWh.toLocaleString();
+    document.getElementById('res-water-consumption').innerText = totalWaterLitersMillion;
+    document.getElementById('res-feasibility-score').innerText = finalScore + ' / 100';
+
+    const scoreCard = document.getElementById('score-card');
+    const scoreTopLine = document.getElementById('score-top-line');
+    const scoreLabel = document.getElementById('score-label');
+    const scoreIcon = document.getElementById('score-icon');
+    const scoreValue = document.getElementById('res-feasibility-score');
+    const scoreDescription = document.getElementById('score-description');
+
+    let color;
+    if (finalScore >= 80) color = { card: 'bg-emerald-50 border-emerald-200', line: 'bg-emerald-500', label: 'text-emerald-800', icon: 'text-emerald-600', value: 'text-emerald-950', desc: 'text-emerald-800', text: 'Skala 0–100 · Sangat Layak', symbol: 'fa-circle-check' };
+    else if (finalScore >= 60) color = { card: 'bg-amber-50 border-amber-200', line: 'bg-amber-500', label: 'text-amber-800', icon: 'text-amber-600', value: 'text-amber-950', desc: 'text-amber-800', text: 'Skala 0–100 · Cukup Layak', symbol: 'fa-circle-check' };
+    else if (finalScore >= 40) color = { card: 'bg-orange-50 border-orange-200', line: 'bg-orange-500', label: 'text-orange-800', icon: 'text-orange-600', value: 'text-orange-950', desc: 'text-orange-800', text: 'Skala 0–100 · Perlu Evaluasi', symbol: 'fa-circle-exclamation' };
+    else color = { card: 'bg-rose-50 border-rose-200', line: 'bg-rose-500', label: 'text-rose-800', icon: 'text-rose-600', value: 'text-rose-950', desc: 'text-rose-800', text: 'Skala 0–100 · Kurang Layak', symbol: 'fa-circle-xmark' };
+
+    // Kunci ukuran menjadi h-[110px] dan pastikan format padding benar
+    scoreCard.className = 'relative overflow-hidden p-3 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 h-[110px] flex flex-col justify-between group ' + color.card;
+    scoreTopLine.className = 'absolute top-0 left-0 w-full h-1 ' + color.line;
+    scoreLabel.className = 'text-[10px] sm:text-[11px] font-bold uppercase tracking-wide block ' + color.label;
+    scoreIcon.className = 'w-8 h-8 shrink-0 rounded-xl bg-white flex items-center justify-center shadow-sm ' + color.icon;
+    scoreIcon.innerHTML = `<i class="fa-solid ${color.symbol} text-sm"></i>`;
+    scoreValue.className = 'text-2xl sm:text-3xl font-extrabold tracking-tight leading-none ' + color.value;
+    scoreDescription.className = 'text-[9px] sm:text-[10px] mt-0.5 opacity-80 line-clamp-1 ' + color.desc;
+    scoreDescription.innerText = color.text;
+
+    const waterStatus = reg.waterRisk > 60 ? { title: 'Risiko Air Tinggi', message: 'Perlu mitigasi risiko air.', color: 'rose', icon: 'fa-triangle-exclamation' } : reg.waterRisk >= 45 ? { title: 'Risiko Air Sedang', message: 'Ketersediaan air perlu dipantau.', color: 'amber', icon: 'fa-circle-exclamation' } : { title: 'Risiko Air Relatif Rendah', message: 'Ketersediaan air setempat tetap perlu diverifikasi.', color: 'emerald', icon: 'fa-circle-check' };
+    const theme = { rose: { panel: 'bg-rose-50 border-rose-200', badge: 'bg-rose-100 text-rose-700', title: 'text-rose-800' }, amber: { panel: 'bg-amber-50 border-amber-200', badge: 'bg-amber-100 text-amber-700', title: 'text-amber-800' }, emerald: { panel: 'bg-emerald-50 border-emerald-200', badge: 'bg-emerald-100 text-emerald-700', title: 'text-emerald-800' } };
+    const style = theme[waterStatus.color];
+
+    document.getElementById('res-analysis-text').innerHTML = `
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="rounded-xl border ${style.panel} p-3 sm:p-4">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 shrink-0 rounded-full ${style.badge} flex items-center justify-center"><i class="fa-solid ${waterStatus.icon} text-sm"></i></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-1"><h5 class="font-bold text-xs ${style.title}">${waterStatus.title}</h5></div>
+                    <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">${waterStatus.message}</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+            <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-bullseye text-blue-600 text-sm"></i><h5 class="font-bold text-slate-900 text-xs">Rekomendasi Utama</h5></div>
+            <div class="space-y-3">
+                <div class="flex items-start gap-2.5">
+                    <span class="w-5 h-5 shrink-0 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center border border-blue-200">1</span>
+                    <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">${reg.waterRisk >= 45 ? 'Verifikasi ketersediaan air dan siapkan mitigasi.' : 'Pertimbangkan teknologi efisiensi air.'}</p>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <span class="w-5 h-5 shrink-0 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center border border-blue-200">2</span>
+                    <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">${reg.renewables < 30 ? 'Evaluasi peluang pemanfaatan energi terbarukan.' : 'Pertahankan pemanfaatan energi terbarukan.'}</p>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+function renderLeaderboard() {
+    const searchInput = document.getElementById('leaderboard-search');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const tbody = document.getElementById('leaderboard-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    const scoredRegions = regions.map(r => ({...r, score: calculateWiseScore(r)})).sort((a,b) => b.score - a.score);
+    const filtered = scoredRegions.filter(r => r.name.toLowerCase().includes(query) || r.province.toLowerCase().includes(query));
+
+    if(filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-3 block text-slate-300"></i>Tidak ada wilayah yang ditemukan.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach((reg, idx) => {
+        let badgeColor = reg.waterRisk > 60 ? 'bg-rose-100 text-rose-700 border-rose-200' 
+                       : (reg.waterRisk >= 45 ? 'bg-amber-100 text-amber-700 border-amber-200' 
+                       : 'bg-emerald-100 text-emerald-700 border-emerald-200');
+
+        let rankDisplay = '';
+        if (idx === 0) {
+            rankDisplay = `<span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-200 to-yellow-400 text-yellow-900 font-bold shadow-sm border border-yellow-300"><i class="fa-solid fa-crown text-xs mr-1"></i>1</span>`;
+        } else if (idx === 1) {
+            rankDisplay = `<span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-200 to-slate-300 text-slate-700 font-bold shadow-sm border border-slate-300">2</span>`;
+        } else if (idx === 2) {
+            rankDisplay = `<span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-orange-200 to-orange-300 text-orange-800 font-bold shadow-sm border border-orange-300">3</span>`;
+        } else {
+            rankDisplay = `<span class="font-bold text-slate-400 ml-2">#${idx + 1}</span>`;
+        }
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-sky-50/40 transition duration-200 group">
+                <td class="py-3 px-5">${rankDisplay}</td>
+                <td class="py-3 px-5 font-semibold text-slate-800 group-hover:text-blue-700 transition">${reg.name}</td>
+                <td class="py-3 px-5 text-slate-500">${reg.province}</td>
+                <td class="py-3 px-5">
+                    <span class="px-2.5 py-1 rounded-md text-xs font-bold border ${badgeColor}">
+                        ${reg.waterRisk} <span class="opacity-70 font-medium">/ 100</span>
+                    </span>
+                </td>
+                <td class="py-3 px-5">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-slate-300 text-xs"></i>
+                        <span class="font-medium text-slate-700">${reg.energyRel}%</span>
+                    </div>
+                </td>
+                <td class="py-3 px-5">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 font-semibold border border-sky-100 text-xs">
+                        <i class="fa-solid fa-leaf text-sky-500"></i> ${reg.renewables}%
+                    </span>
+                </td>
+                <td class="py-3 px-5 text-center">
+                    <span class="inline-block px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-sm shadow-md shadow-blue-500/20">
+                        ${reg.score}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Run on load
+window.onload = function() {
+    initDashboard();
+    initSimulator();
+    renderLeaderboard();
+};
+</script>
